@@ -2,8 +2,8 @@
 
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton
 from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtGui import QPalette, QColor  # Agregar este import
 import qtawesome as qta
-
 
 class MenuLateral(QWidget):
     """Menú lateral con navegación principal"""
@@ -15,7 +15,12 @@ class MenuLateral(QWidget):
     
     def setup_ui(self):
         self.setFixedWidth(250)
-        self.setStyleSheet("background-color: #F5F6FA;")
+        
+        # Forzar color de fondo con QPalette
+        self.setAutoFillBackground(True)
+        palette = self.palette()
+        palette.setColor(QPalette.ColorRole.Window, QColor("#F5F6FA"))
+        self.setPalette(palette)
         
         layout = QVBoxLayout(self)
         layout.setContentsMargins(15, 15, 15, 15)
