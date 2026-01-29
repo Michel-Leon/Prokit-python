@@ -317,3 +317,29 @@ class SeccionTabla(QFrame):
             self.tabla.setItem(fila, 2, QTableWidgetItem(tipo))
             self.tabla.setItem(fila, 3, QTableWidgetItem(fecha))
             self.tabla.setCellWidget(fila, 4, self.crear_botones_acciones(fila))
+    
+    def agregar_proyecto(self, datos:dict):
+        """Agregar un nuevo proyecto a la tabla""" 
+        fila = self.tabla.rowCount()
+        self.tabla.insertRow(fila)
+        
+        self.tabla.setItem(fila, 0, QTableWidgetItem(datos["nombre"]))
+        self.tabla.setItem(fila, 1, QTableWidgetItem(datos["empresa"]))
+        self.tabla.setItem(fila, 2, QTableWidgetItem(datos["tipo_completo"]))
+        self.tabla.setItem(fila, 3, QTableWidgetItem(datos["fecha"]))
+        self.tabla.setCellWidget(fila, 4, self.crear_botones_acciones(fila))
+        
+    def contar_por_tipo(self) -> tuple:
+        """Cuenta proyectos publicos y privados. Retorna (publicas, Privadas)"""   
+        publicas = 0
+        privadas = 0
+        
+        for fila in range(self.tabla.rowCount()):
+            item = self.tabla.item(fila, 2)
+            if item:
+                tipo = item.text().lower()
+                if "pública" in tipo:
+                    publicas += 1
+                elif "privada" in tipo:
+                    privadas += 1
+        return publicas, privadas        

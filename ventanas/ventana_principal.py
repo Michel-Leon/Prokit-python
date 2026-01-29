@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import (
 )
 import qtawesome as qta
 
-from componentes import MenuLateral, BarraSuperior, ContenedorTarjetas, SeccionTabla
+from componentes import MenuLateral, BarraSuperior, ContenedorTarjetas, SeccionTabla, DialogoNuevoProyecto
 
 
 class VentanaPrincipal(QMainWindow):
@@ -16,6 +16,7 @@ class VentanaPrincipal(QMainWindow):
         super().__init__()
         self.setup_ui()
         self.conectar_senales()
+        self.actualizar_contadores() 
     
     def setup_ui(self):
         """Configura la interfaz principal"""
@@ -104,15 +105,69 @@ class VentanaPrincipal(QMainWindow):
     
     def conectar_senales(self):
         """Conecta las señales entre componentes"""
-        # Botón hamburguesa toggle menú
-        self.barra_superior.menu_toggle_signal.connect(self.menu_lateral.toggle)
+        print("=== Conectando señales ===")
         
-        # Señales de la tabla (puedes agregar funcionalidad aquí)
-        self.seccion_tabla.nuevo_proyecto_signal.connect(self.nuevo_proyecto)
+        self.barra_superior.menu_toggle_signal.connect(self.menu_lateral.toggle)
+        print("- Menu toggle conectado")
+        
+        self.seccion_tabla.nuevo_proyecto_signal.connect(self.abrir_dialogo_nuevo_proyecto)
+        print("- Nuevo proyecto conectado")
+        
         self.seccion_tabla.ver_proyecto_signal.connect(self.ver_proyecto)
         self.seccion_tabla.editar_proyecto_signal.connect(self.editar_proyecto)
         self.seccion_tabla.eliminar_proyecto_signal.connect(self.eliminar_proyecto)
+        print("=== Señales conectadas ===")
+        
+    def actualizar_contadores(self):
+        """Actualiza los contadores de proyectos publicos y privados"""
+        publicas, privadas = self.seccion_tabla.contar_por_tipo()
+        self.tarjetas.actualizar_contadores(publicas, privadas)
     
+    def abrir_dialogo_nuevo_proyecto(self):
+        """Abre el diálogo para crear nuevo proyecto"""
+        print("1. Señal recibida")
+    
+        try:
+            print("2. Importando diálogo...")
+            from componentes import DialogoNuevoProyecto
+            
+            print("3. Creando diálogo...")
+            dialogo = DialogoNuevoProyecto(self)
+            
+            print("4. Conectando señal...")
+            dialogo.proyecto_creado.connect(self.agregar_nuevo_proyecto)
+            
+            print("5. Abriendo diálogo...")
+            dialogo.exec()
+            
+            print("6. Diálogo cerrado")
+        except Exception as e:
+            print(f"ERROR: {e}")
+        
+    def agregar_nuevo_proyecto(self, datos:dict):
+        """Agragar el nuevo proyecto a la tabla y actualizar contadores""" 
+        # Agregar a la tabla
+        self.seccion_tabla.agregar_proyecto(datos)  
+        
+        # Actualizar contadores de tarjetas
+        self.actualizar_contadores()
+        
+        print(f"Proyecto creado: {datos['nombre']}")
+    
+    def ver_proyecto(self, fila: int):
+        print(f"Ver proyecto en fila {fila}")
+    
+    def editar_proyecto(self, fila: int):
+        print(f"Editar proyecto en fila {fila}")
+                
+    def eliminar_proyecto(self, fila: int): 
+        """Acción para eliminar proyecto"""
+        self.seccion_tabla.tabla.removeRow(fila)
+        self.actualizar_contadores()
+        print(f"Proyecto eliminado de fila {fila}")
+        
+        
+         
     def nuevo_proyecto(self):
         """Acción para crear nuevo proyecto"""
         print("Crear nuevo proyecto")

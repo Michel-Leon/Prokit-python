@@ -10,6 +10,8 @@ class ContenedorTarjetas(QWidget):
     
     def __init__(self):
         super().__init__()
+        self.contador_publicas = 0
+        self.contador_privadas = 0
         self.setup_ui()
     
     def setup_ui(self):
@@ -18,27 +20,27 @@ class ContenedorTarjetas(QWidget):
         layout.setSpacing(20)
         
         # Tarjeta 1: Licitaciones Públicas
-        tarjeta1 = self.crear_tarjeta(
+        self.tarjeta_publicas, self.lbl_numero_publicas = self.crear_tarjeta(
             titulo="Licitaciones públicas",
-            numero="7",
+            numero="0",
             color="#0065bb",
-            icono='fa6s.people-roof'
+            icono='fa6s.landmark-flag'
         )
-        layout.addWidget(tarjeta1)
+        layout.addWidget(self.tarjeta_publicas)
         
         # Tarjeta 2: Licitaciones Privadas
-        tarjeta2 = self.crear_tarjeta(
+        self.tarjeta_privadas, self.lbl_numero_privadas = self.crear_tarjeta(
             titulo="Licitaciones privadas",
             numero="3",
             color="#00B622",
-            icono='ri.git-repository-private-fill'
+            icono='fa6s.building-columns'
         )
-        layout.addWidget(tarjeta2)
+        layout.addWidget(self.tarjeta_privadas)
         
         layout.addStretch()
     
-    def crear_tarjeta(self, titulo: str, numero: str, color: str, icono: str) -> QFrame:
-        """Crea una tarjeta con título, número e ícono"""
+    def crear_tarjeta(self, titulo: str, numero: str, color: str, icono: str) -> tuple:
+        """Crea una tarjeta con título, número e ícono. retorna (tarjeta, lbl_numero)"""
         tarjeta = QFrame()
         tarjeta.setFixedSize(280, 120)
         tarjeta.setStyleSheet("""
@@ -87,4 +89,20 @@ class ContenedorTarjetas(QWidget):
         layout.addLayout(info_layout)
         layout.addWidget(lbl_icono)
         
-        return tarjeta
+        return tarjeta, lbl_numero
+    
+    def actualizar_contadores(self, publicas: int, privadas: int):
+        self.contador_publicas = publicas
+        self.contador_privadas = privadas
+        self.lbl_numero_publicas.setText(str(self.contador_publicas))
+        self.lbl_numero_privadas.setText(str(self.contador_privadas))
+        
+    def incrementar_publicas(self):
+        """Incrementa el contador de licitaciones públicas"""
+        self.contador_publicas += 1
+        self.lbl_numero_publicas.setText(str(self.contador_publicas))
+    
+    def incrementar_privadas(self):
+        """Incrementa el contador de licitaciones privadas"""
+        self.contador_privadas += 1
+        self.lbl_numero_privadas.setText(str(self.contador_privadas))     
