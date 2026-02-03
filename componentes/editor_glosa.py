@@ -25,7 +25,6 @@ DATOS_SISTEMA = {
         "familia_celda": {
             "titulo": "Familia de la celda",
             "opciones": ["AIS", "2SIS"],
-            "nota": "Nota: celda cambia según la selección de familia"
         },
         "celda": {
             "dependencias": {
@@ -77,4 +76,101 @@ class BotonOpcion(QPushButton):
         self.actualizar_estilo()
         
     def actualizar_estilo(self):
+        if self.seleccionado:
+            self.setStyleSheet("""
+                QPushButton {
+                    background-color: #0065bb;
+                    color: white;
+                    border: none;
+                    border-radius: 16px;
+                    padding: 6px 18px;
+                    font-size: 12px;
+                    font-family: 'Titillium Web';
+                    font-weight: bold;
+                }      
+        """)
+        else:
+            self.setStyleSheet("""
+                QPushButton {
+                    background-color: #FFFFFF;
+                    color: #333;
+                    border: 1px solid #E0E0E0;
+                    border-radius: 16px;
+                    padding: 6px 18px;
+                    font-size: 12px;
+                    font-family: 'Titillium Web';
+                    font-weight: bold;
+                }
+                QPushButton:hover {
+                    border-color: #0065bb;
+                    color: #0065bb;
+                }
+                               """)    
+    def set_seleccionado(self,estado:bool):
+        self.seleccionado = estado
+        self.actualizar_estilo()
+
+class  CheckBoxOpcion(QWidget):
+    """Checkox estilizado para seleccion multiple""" 
+    
+    seleccion_cambio = pyqtSignal(str, bool)
+    
+    def __init__(self,texto:str):
+        super().__init__()
+        self.texto = texto
+        self.seleccionado = False
+        
+        layout= QHBoxLayout(self)
+        layout.setContentsMargins(0,2,10,2)
+        layout.setSpacing(5)
+        
+        self.check = QLabel("☐")
+        self.check.setFixedHeight(18)
+        self.check.setStyleSheet("font-size: 14px; color: #666;") 
+        
+        self.label = QLabel(texto)
+        self.label.setStyleSheet("""font-size: 12px;
+                                 color: #333;
+                                 font-family: 'Titillium Web';
+        """)
+        
+        layout.addwidget(self.check)
+        layout.addWidget(self.label)
+        
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        
+    def mousePressEvent(self, event):
+        self.seleccionado = not self.seleccionado
+        if self.seleccionado:
+            self.check.setText("☑")
+            self.check.setStyleSheet("font-size: 14px; color: #0065bb; font-weight: bold;") 
+        else:
+            self.check.setText("☐")
+            self.check.setStyleSheet("font-size: 14px; color: #666;") 
+        self.seleccion_cambio.emit(self.texto, self.seleccionado)
+        
+class SeccionCaracteristicas(QWidget):
+    """Una seccin dentro del panel de contenido (EJ: Tipo de celda)""" 
+    
+    seleccion_hecha = pyqtSignal(str,str,str) #seccion campo valor
+    
+    def __init__(self, titulo:str,opciones:list, tipo:str="simple"): 
+        super().__init__()
+        self.titulo = titulo
+        self.opciones = opciones
+        self.tipo = tipo
+        self.botones = []
+        self.checks = []
+        self.valor_seleccionado = ""
+        self.valores_multiples = []
+        self.setup_ui()
+        
+    def setup_ui(self):
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0,5,0,5)  
+        layout.setSpacing(5)
+        
+        # TITULO CON ICONO +          
+     
+            
             
