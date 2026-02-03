@@ -6,7 +6,10 @@ from PyQt6.QtWidgets import (
 )
 import qtawesome as qta
 
-from componentes import MenuLateral, BarraSuperior, ContenedorTarjetas, SeccionTabla, DialogoNuevoProyecto
+from componentes import (
+    MenuLateral, BarraSuperior, ContenedorTarjetas, 
+    SeccionTabla, DialogoNuevoProyecto, TarjetaProyecto
+)
 
 
 class VentanaPrincipal(QMainWindow):
@@ -16,7 +19,7 @@ class VentanaPrincipal(QMainWindow):
         super().__init__()
         self.setup_ui()
         self.conectar_senales()
-        self.actualizar_contadores() 
+        self.actualizar_contadores()
     
     def setup_ui(self):
         """Configura la interfaz principal"""
@@ -58,10 +61,10 @@ class VentanaPrincipal(QMainWindow):
         """)
         
         # Contenido dentro del scroll
-        contenido_scroll = QWidget()
-        layout_scroll = QVBoxLayout(contenido_scroll)
-        layout_scroll.setContentsMargins(30, 20, 30, 20)
-        layout_scroll.setSpacing(15)
+        self.contenido_scroll = QWidget()
+        self.layout_scroll = QVBoxLayout(self.contenido_scroll)
+        self.layout_scroll.setContentsMargins(30, 20, 30, 20)
+        self.layout_scroll.setSpacing(15)
         
         # Breadcrumb
         contenedor_breadcrumb = QWidget()
@@ -78,7 +81,7 @@ class VentanaPrincipal(QMainWindow):
         layout_breadcrumb.addWidget(texto_bread)
         layout_breadcrumb.addStretch()
         
-        layout_scroll.addWidget(contenedor_breadcrumb)
+        self.layout_scroll.addWidget(contenedor_breadcrumb)
         
         # Título
         titulo = QLabel("Gestión de proyectos")
@@ -88,15 +91,21 @@ class VentanaPrincipal(QMainWindow):
             color: #1a1a2e;
             padding: 10px 0;
         """)
-        layout_scroll.addWidget(titulo)
+        self.layout_scroll.addWidget(titulo)
         
-        # Tarjetas
-        layout_scroll.addWidget(self.tarjetas)
+        # Contenedor para la tarjeta del proyecto (inicialmente vacío)
+        #self.contenedor_tarjeta = QWidget()
+        #self.layout_tarjeta = QVBoxLayout(self.contenedor_tarjeta)
+        #self.layout_tarjeta.setContentsMargins(0, 0, 0, 0)
+        #self.layout_scroll.addWidget(self.contenedor_tarjeta)
+        
+        # Tarjetas de estadísticas
+        self.layout_scroll.addWidget(self.tarjetas)
         
         # Tabla
-        layout_scroll.addWidget(self.seccion_tabla, 1)
+        self.layout_scroll.addWidget(self.seccion_tabla, 1)
         
-        area_scroll.setWidget(contenido_scroll)
+        area_scroll.setWidget(self.contenido_scroll)
         layout_contenido.addWidget(area_scroll)
         
         # Agregar al layout principal
@@ -105,81 +114,84 @@ class VentanaPrincipal(QMainWindow):
     
     def conectar_senales(self):
         """Conecta las señales entre componentes"""
-        print("=== Conectando señales ===")
-        
+        # Botón hamburguesa toggle menú
         self.barra_superior.menu_toggle_signal.connect(self.menu_lateral.toggle)
-        print("- Menu toggle conectado")
         
+        # Señales de la tabla
         self.seccion_tabla.nuevo_proyecto_signal.connect(self.abrir_dialogo_nuevo_proyecto)
-        print("- Nuevo proyecto conectado")
-        
-        self.seccion_tabla.ver_proyecto_signal.connect(self.ver_proyecto)
-        self.seccion_tabla.editar_proyecto_signal.connect(self.editar_proyecto)
+        self.seccion_tabla.ver_proyecto_signal.connect(self.mostrar_tarjeta_proyecto)
         self.seccion_tabla.eliminar_proyecto_signal.connect(self.eliminar_proyecto)
-        print("=== Señales conectadas ===")
-        
+    
     def actualizar_contadores(self):
-        """Actualiza los contadores de proyectos publicos y privados"""
+        """Actualiza los contadores de las tarjetas"""
         publicas, privadas = self.seccion_tabla.contar_por_tipo()
         self.tarjetas.actualizar_contadores(publicas, privadas)
     
     def abrir_dialogo_nuevo_proyecto(self):
         """Abre el diálogo para crear nuevo proyecto"""
-        print("1. Señal recibida")
+        from componentes import DialogoNuevoProyecto
+        
+        dialogo = DialogoNuevoProyecto(self)
+        dialogo.proyecto_creado.connect(self.agregar_nuevo_proyecto)
+        dialogo.exec()
     
-        try:
-            print("2. Importando diálogo...")
-            from componentes import DialogoNuevoProyecto
-            
-            print("3. Creando diálogo...")
-            dialogo = DialogoNuevoProyecto(self)
-            
-            print("4. Conectando señal...")
-            dialogo.proyecto_creado.connect(self.agregar_nuevo_proyecto)
-            
-            print("5. Abriendo diálogo...")
-            dialogo.exec()
-            
-            print("6. Diálogo cerrado")
-        except Exception as e:
-            print(f"ERROR: {e}")
-        
-    def agregar_nuevo_proyecto(self, datos:dict):
-        """Agragar el nuevo proyecto a la tabla y actualizar contadores""" 
-        # Agregar a la tabla
-        self.seccion_tabla.agregar_proyecto(datos)  
-        
-        # Actualizar contadores de tarjetas
+    def agregar_nuevo_proyecto(self, datos: dict):
+        """Agrega el nuevo proyecto a la tabla y actualiza contadores"""
+        self.seccion_tabla.agregar_proyecto(datos)
         self.actualizar_contadores()
-        
         print(f"Proyecto creado: {datos['nombre']}")
     
-    def ver_proyecto(self, fila: int):
-        print(f"Ver proyecto en fila {fila}")
+    def mostrar_tarjeta_proyecto(self, fila: int):
+        """Muestra la tarjeta del proyecto como diálogo"""
+        # Obtener datos del proyecto
+        datos = self.seccion_tabla.obtener_proyecto(fila)
     
-    def editar_proyecto(self, fila: int):
-        print(f"Editar proyecto en fila {fila}")
-                
-    def eliminar_proyecto(self, fila: int): 
-        """Acción para eliminar proyecto"""
-        self.seccion_tabla.tabla.removeRow(fila)
-        self.actualizar_contadores()
-        print(f"Proyecto eliminado de fila {fila}")
+        if datos:
+            # Crear y mostrar diálogo
+            dialogo = TarjetaProyecto(datos, self)
+            
+            # Conectar señales
+            dialogo.nuevo_documento_signal.connect(
+                lambda: self.nuevo_documento(fila)
+            )
+            dialogo.editar_documento_signal.connect(
+                lambda doc_fila: self.editar_documento(fila, doc_fila)
+            )
+            dialogo.descargar_documento_signal.connect(
+                lambda doc_fila: self.descargar_documento(fila, doc_fila)
+            )
+            
+            # Mostrar diálogo
+            dialogo.exec()
+    
+    def nuevo_documento(self, fila_proyecto: int):
+        """Abre diálogo para crear nuevo documento"""
+        print(f"Crear nuevo documento para proyecto en fila {fila_proyecto}")
+        # Aquí puedes abrir un diálogo para crear documento
+    
+    def editar_documento(self, fila_proyecto: int, fila_documento: int):
+        """Abre el editor según el tipo de documento"""
+        datos = self.seccion_tabla.obtener_proyecto(fila_proyecto)
         
-        
-         
-    def nuevo_proyecto(self):
-        """Acción para crear nuevo proyecto"""
-        print("Crear nuevo proyecto")
+        if datos:
+            from ventanas.ventana_editor_glosa import VentanaEditorGlosa
+            self.ventana_editor = VentanaEditorGlosa(datos, self)
+            self.ventana_editor.show()
     
-    def ver_proyecto(self, fila: int):
-        """Acción para ver proyecto"""
-        print(f"Ver proyecto en fila {fila}")
-    
-    def editar_proyecto(self, fila: int):
-        """Acción para editar proyecto"""
-        print(f"Editar proyecto en fila {fila}")
+    def descargar_documento(self, fila_proyecto: int, fila_documento: int):
+        """Descarga el documento"""
+        print(f"Descargar documento {fila_documento} del proyecto {fila_proyecto}")
+        # Aquí puedes implementar la descarga
     
     def eliminar_proyecto(self, fila: int):
         """Acción para eliminar proyecto"""
-        print(f"Eliminar proyecto en fila {fila}")
+        # Cerrar tarjeta si está abierta
+        self.cerrar_tarjeta_proyecto()
+        
+        # Eliminar de la lista y tabla
+        if 0 <= fila < len(self.seccion_tabla.proyectos):
+            self.seccion_tabla.proyectos.pop(fila)
+        self.seccion_tabla.tabla.removeRow(fila)
+        
+        self.actualizar_contadores()
+        print(f"Proyecto eliminado de fila {fila}")

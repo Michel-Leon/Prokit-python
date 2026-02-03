@@ -20,6 +20,7 @@ class SeccionTabla(QFrame):
     
     def __init__(self):
         super().__init__()
+        self.proyectos = []
         self.setup_ui()
     
     def setup_ui(self):
@@ -281,12 +282,12 @@ class SeccionTabla(QFrame):
         btn_ver.setStyleSheet(estilo_boton)
         btn_ver.clicked.connect(lambda: self.ver_proyecto_signal.emit(fila))
         
-        btn_editar = QPushButton()
-        btn_editar.setIcon(qta.icon("fa5.edit", color="#0065bb"))
-        btn_editar.setFixedSize(30, 30)
-        btn_editar.setCursor(Qt.CursorShape.PointingHandCursor)
-        btn_editar.setStyleSheet(estilo_boton)
-        btn_editar.clicked.connect(lambda: self.editar_proyecto_signal.emit(fila))
+        #btn_editar = QPushButton()
+        #btn_editar.setIcon(qta.icon("fa5.edit", color="#0065bb"))
+        #btn_editar.setFixedSize(30, 30)
+        #btn_editar.setCursor(Qt.CursorShape.PointingHandCursor)
+        #btn_editar.setStyleSheet(estilo_boton)
+        #btn_editar.clicked.connect(lambda: self.editar_proyecto_signal.emit(fila))
         
         btn_eliminar = QPushButton()
         btn_eliminar.setIcon(qta.icon('fa6s.trash-can', color='#FA896B'))
@@ -296,30 +297,61 @@ class SeccionTabla(QFrame):
         btn_eliminar.clicked.connect(lambda: self.eliminar_proyecto_signal.emit(fila))
         
         layout.addWidget(btn_ver)
-        layout.addWidget(btn_editar)
+        #layout.addWidget(btn_editar)
         layout.addWidget(btn_eliminar)
         
         return widget
     
     def cargar_datos_ejemplo(self):
         """Carga datos de ejemplo en la tabla"""
-        datos = [
-            ("T-power", "Hocol", "Pública/Básica", "23/01/2026"),
-            ("G-Flex", "CTS", "Privada/Premium", "23/01/2026"),
-            ("BlokSeT", "EcoPetrol", "Pública/Premium", "23/01/2026"),
+        datos_ejemplo = [
+            {
+                "nombre": "T-power",
+                "empresa": "Hocol",
+                "comercial": "Juan Pérez",
+                "crm": "0021",
+                "tipo_licitacion": "Pública",
+                "tipo_especificacion": "Básica",
+                "tipo_completo": "Pública/Básica",
+                "fecha": "23/01/2026",
+                "documentos": [
+                    {"tipo": "Glosa", "formato": ".docx", "version": "1"},
+                ]
+            },
+            {
+                "nombre": "G-Flex",
+                "empresa": "CTS",
+                "comercial": "María García",
+                "crm": "0022",
+                "tipo_licitacion": "Privada",
+                "tipo_especificacion": "Premium",
+                "tipo_completo": "Privada/Premium",
+                "fecha": "23/01/2026",
+                "documentos": []
+            },
+            {
+                "nombre": "BlokSeT",
+                "empresa": "EcoPetrol",
+                "comercial": "Carlos López",
+                "crm": "0023",
+                "tipo_licitacion": "Pública",
+                "tipo_especificacion": "Premium",
+                "tipo_completo": "Pública/Premium",
+                "fecha": "23/01/2026",
+                "documentos": [
+                    {"tipo": "RPP", "formato": ".xls", "version": "1"},
+                ]
+            },
         ]
         
-        self.tabla.setRowCount(len(datos))
+        for datos in datos_ejemplo:
+            self.agregar_proyecto(datos)
         
-        for fila, (nombre, empresa, tipo, fecha) in enumerate(datos):
-            self.tabla.setItem(fila, 0, QTableWidgetItem(nombre))
-            self.tabla.setItem(fila, 1, QTableWidgetItem(empresa))
-            self.tabla.setItem(fila, 2, QTableWidgetItem(tipo))
-            self.tabla.setItem(fila, 3, QTableWidgetItem(fecha))
-            self.tabla.setCellWidget(fila, 4, self.crear_botones_acciones(fila))
-    
     def agregar_proyecto(self, datos:dict):
         """Agregar un nuevo proyecto a la tabla""" 
+        # Guardar datos completos
+        self.proyectos.append(datos)
+        
         fila = self.tabla.rowCount()
         self.tabla.insertRow(fila)
         
@@ -328,7 +360,13 @@ class SeccionTabla(QFrame):
         self.tabla.setItem(fila, 2, QTableWidgetItem(datos["tipo_completo"]))
         self.tabla.setItem(fila, 3, QTableWidgetItem(datos["fecha"]))
         self.tabla.setCellWidget(fila, 4, self.crear_botones_acciones(fila))
-        
+    
+    def obtener_proyecto(self, fila: int) -> dict:
+        """Obtiene los datos completos de un proyecto por su fila"""
+        if 0 <= fila < len(self.proyectos):
+            return self.proyectos[fila]
+        return {}
+    
     def contar_por_tipo(self) -> tuple:
         """Cuenta proyectos publicos y privados. Retorna (publicas, Privadas)"""   
         publicas = 0

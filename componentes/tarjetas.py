@@ -82,7 +82,7 @@ class ContenedorTarjetas(QWidget):
         info_layout.addWidget(lbl_numero)
         
         # Ícono
-        lbl_icono = QLabel()
+        lbl_icono = QLabel() 
         lbl_icono.setPixmap(qta.icon(icono, color=color).pixmap(60, 60))
         lbl_icono.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
