@@ -1,0 +1,115 @@
+{
+    "Sección de Media Tensión": {
+        "tipo_celda": {
+            "titulo": "Tipo de celda",
+            "opciones": ["Primaria", "Secundaria"]
+        },
+        "nivel_tension": {
+            "titulo": "Nivel de tensión",
+            "opciones": ["24 Kv", "36 Kv"]
+        },
+        "familia_celda": {
+            "titulo": "Familia de la celda",
+            "opciones": ["AIS", "2SIS","GIS"]
+        },
+        "celda": {
+            "titulo": "Celda",
+            "dependencias":{
+                "2SIS":{
+                    "24 Kv":{
+                        "Primaria": ["Premset"],
+                        "Secundaria": ["Premset"]
+                    }
+                },
+                "AIS":{
+                    "24 Kv":{
+                        "Primaria": ["PIX"],
+                        "Secundaria": ["SM6","AIR"]
+                    },
+                    "36 Kv":{
+                        "Secundaria": ["SM6"]
+                    }
+                },
+                "GIS":{
+                    "24 Kv":{
+                        "Primaria": ["GBGS-0","GBGS-2"]
+                    },
+                    "36 Kv":{
+                        "Primaria": ["GBGS-0","GBGS-2"]
+                    }
+                }
+
+            }
+        },
+        "condiciones_generales": {
+            "titulo": "Condiciones Generales",
+            "opciones": ["Aplica", "No aplica"]
+        },
+        "caracteristicas_generales": {
+            "titulo": "Características generales",
+            "opciones": ["Aplica", "No aplica"]
+        },
+        "clases_celdas": {
+            "titulo": "Clases de Celdas",
+            "opciones": [
+                "IM", "QM", "GBC", "DM1-A", "GAM-0", "GAM-2",
+                "NSM-0", "NSM-1", "NSM-2", "NSM-3", "GAM-3"
+            ],
+            "tipo": "multiple"
+        },
+        "killin_products": {
+            "titulo": "Killin products",
+            "opciones": ["H-Guard", "Sistema de Testigos"]
+        },
+        "documentos": {
+            "titulo": "Documentos",
+            "opciones": ["Aplica", "No aplica"]
+        },
+        "pruebas_fat": {
+            "titulo": "Pruebas FAT",
+            "opciones": ["Aplica", "No aplica"]
+        }
+    },
+    "Seccion baja tension RETIE": {
+        "Producto_CTS": {
+            "titulo": "Producto de la compañía",
+            "opciones": ["T-Power", "G-Flex"]
+        },
+        "corriente_nominal": {
+            "titulo": "Corriente nominal",
+            "opciones": [ "400 A", "600 A", "800 A", "1000 A"]
+        },
+        "condiciones_generales": {
+            "titulo": "Condiciones Generales",
+            "opciones": ["Aplica", "No aplica"]
+        }
+},
+    "Seccion baja tension IEC": {
+        "tipo_tablero": {
+            "titulo": "Tipo de tablero",
+            "opciones": ["BlokSeT", "Prisma"]
+        },
+        "corriente_nominal": {
+            "titulo": "Corriente nominal",
+            "opciones": [ "400 A", "600 A", "800 A", "1000 A"]
+        },
+        "condiciones_generales": {
+            "titulo": "Condiciones Generales",
+            "opciones": ["Aplica", "No aplica"]
+        }
+},
+    "Seccion media tension UL": {
+        "Producto_CTS": {
+            "titulo": "Producto de la compañía",
+            "opciones": ["T-Power", "G-Flex"]
+        },
+        "corriente_nominal": {
+            "titulo": "Corriente nominal",
+            "opciones": [ "400 A", "600 A", "800 A", "1000 A"]
+        },
+        "condiciones_generales": {
+            "titulo": "Condiciones Generales",
+            "opciones": ["Aplica", "No aplica"]
+        }
+}
+}

@@ -2,68 +2,34 @@
 
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel, QPushButton,
-    QScrollArea, QSplitter, QGraphicsDropShadowEffect, QSizePolicy
+    QScrollArea, QGraphicsDropShadowEffect
 )
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QColor, QFont
+from PyQt6.QtGui import QColor
 import qtawesome as qta
+import json
+import os
 
 
 # ============================================================
-# DATOS DE PRUEBA - Estructura jerárquica del sistema eléctrico
-# En el futuro esto vendrá de una base de datos
+# Configuracion_de_sistema - Estructura jerárquica del sistema eléctrico
+# proviene de la carpeta datos/configuracion_de_sistema.json
 # ============================================================
-DATOS_SISTEMA = {
-    "Sección de Media Tensión": {
-        "tipo_celda": {
-            "titulo": "Tipo de celda",
-            "opciones": ["Primaria", "Secundaria"]
-        },
-        "nivel_tension": {
-            "titulo": "Nivel de tensión",
-            "opciones": ["24 Kv", "36 Kv"]
-        },
-        "familia_celda": {
-            "titulo": "Familia de la celda",
-            "opciones": ["AIS", "2SIS"],
-        },
-        "celda": {
-            "dependencias": {
-                "AIS": ["SM6", "SM AIRSET"],
-                "2SIS": ["MCSet", "PIX"]
-            },
-            "titulo": "Celda"
-        },
-        "condiciones_generales": {
-            "titulo": "Condiciones Generales",
-            "opciones": ["Aplica", "No aplica"]
-        },
-        "caracteristicas_generales": {
-            "titulo": "Características generales",
-            "opciones": ["Aplica", "No aplica"]
-        },
-        "clases_celdas": {
-            "titulo": "Clases de Celdas",
-            "opciones": [
-                "IM", "QM", "GBC", "DM1-A", "GAM-0", "GAM-2",
-                "NSM-0", "NSM-1", "NSM-2", "NSM-3", "GAM-3"
-            ],
-            "tipo": "multiple"
-        },
-        "killin_products": {
-            "titulo": "Killin products",
-            "opciones": ["H-Guard", "Sistema de Testigos"]
-        },
-        "documentos": {
-            "titulo": "Documentos",
-            "opciones": ["Aplica", "No aplica"]
-        },
-        "pruebas_fat": {
-            "titulo": "Pruebas FAT",
-            "opciones": ["Aplica", "No aplica"]
-        }
-    }
-}
+def cargar_datos_sistema():
+    """Carga los datos del sistema desde el archivo JSON"""
+    ruta_base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    ruta_json = os.path.join(ruta_base, "datos", "configuracion_de_sistema.json")
+    try:
+        with open(ruta_json, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        print(f"Error: No se encontró el archivo {ruta_json}")
+        return {}
+    except json.JSONDecodeError:
+        print(f"Error: El archivo {ruta_json} no contiene un JSON válido")
+        return {}
+
+DATOS_SISTEMA = cargar_datos_sistema()
 
 
 class BotonOpcion(QPushButton):
@@ -75,6 +41,10 @@ class BotonOpcion(QPushButton):
         self.grupo = grupo
         self.setFixedHeight(32)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.actualizar_estilo()
+
+    def toggle(self):
+        self.seleccionado = not self.seleccionado
         self.actualizar_estilo()
 
     def actualizar_estilo(self):
@@ -167,6 +137,7 @@ class CheckOpcion(QWidget):
                 font-size: 10px;
             """)
         self.seleccion_cambio.emit(self.texto, self.seleccionado)
+        event.accept()
 
 
 class SeccionCaracteristica(QWidget):
@@ -179,7 +150,7 @@ class SeccionCaracteristica(QWidget):
         self.titulo = titulo
         self.opciones = opciones
         self.tipo = tipo
-        self.nota = nota
+        #self.nota = nota
         self.botones = []
         self.checks = []
         self.valor_seleccionado = ""
@@ -208,13 +179,13 @@ class SeccionCaracteristica(QWidget):
         layout_titulo.addWidget(lbl_titulo)
 
         # Nota si existe
-        if self.nota:
-            lbl_nota = QLabel(self.nota)
-            lbl_nota.setStyleSheet("""
-                font-size: 10px; color: #E67E22; font-family: 'Titillium Web';
-            """)
-            lbl_nota.setWordWrap(True)
-            layout_titulo.addWidget(lbl_nota)
+       # if self.nota:
+        #    lbl_nota = QLabel(self.nota)
+        #    lbl_nota.setStyleSheet("""
+        #        font-size: 10px; color: #E67E22; font-family: 'Titillium Web';
+        #    """)
+        #    lbl_nota.setWordWrap(True)
+       #     layout_titulo.addWidget(lbl_nota)
 
         layout_titulo.addStretch()
         layout.addLayout(layout_titulo)
@@ -297,7 +268,7 @@ class SeccionColapsable(QWidget):
         layout_linea.setContentsMargins(8, 0, 0, 0)
         layout_linea.setSpacing(0)
 
-        # Línea vertical azul
+        # Línea vertical
         linea = QFrame()
         linea.setFixedWidth(2)
         linea.setStyleSheet("background-color: #D0D0D0; border: none;")
@@ -377,11 +348,12 @@ class PanelContenido(QFrame):
         super().__init__()
         self.selecciones = {}
         self.secciones_widgets = {}
+        self.secciones_colapsables = {}
         self.setup_ui()
 
     def setup_ui(self):
-        self.setMinimumWidth(420)
-        self.setMaximumWidth(450)
+        self.setMinimumWidth(550)
+        self.setMaximumWidth(5800)
         self.setStyleSheet("""
             QFrame {
                 background-color: white;
@@ -431,9 +403,9 @@ class PanelContenido(QFrame):
 
         contenido_scroll = QWidget()
         contenido_scroll.setStyleSheet("background-color: transparent; border: none;")
-        self.layout_contenido = QVBoxLayout(contenido_scroll)
-        self.layout_contenido.setContentsMargins(20, 10, 20, 20)
-        self.layout_contenido.setSpacing(5)
+        self.layout_scroll = QVBoxLayout(contenido_scroll)
+        self.layout_scroll.setContentsMargins(20, 10, 20, 20)
+        self.layout_scroll.setSpacing(5)
 
         # Título categoría
         lbl_categoria = QLabel("Características del sistema")
@@ -442,142 +414,115 @@ class PanelContenido(QFrame):
             font-weight: bold; color: #0065bb;
             padding: 5px 0;
         """)
-        self.layout_contenido.addWidget(lbl_categoria)
+        self.layout_scroll.addWidget(lbl_categoria)
 
-        # Sección colapsable
-        self._crear_seccion_media_tension()
+        # crear todas las secciones del JSON
+        self.secciones_colapsables = {}  # Diccionario para guardar secciones
+        self._crear_secciones_desde_json()
 
-        self.layout_contenido.addStretch()
+        self.layout_scroll.addStretch()
         scroll.setWidget(contenido_scroll)
         layout_principal.addWidget(scroll)
 
-    def _crear_seccion_media_tension(self):
-        datos_mt = DATOS_SISTEMA["Sección de Media Tensión"]
-
-        self.seccion_mt = SeccionColapsable("Sección de Media Tensión")
-
-        # 1. Tipo de celda
-        sec_tipo = SeccionCaracteristica(
-            datos_mt["tipo_celda"]["titulo"],
-            datos_mt["tipo_celda"]["opciones"]
-        )
-        sec_tipo.seleccion_hecha.connect(self._on_seleccion)
-        self.secciones_widgets["tipo_celda"] = sec_tipo
-        self.seccion_mt.agregar_widget(sec_tipo)
-
-        # 2. Nivel de tensión
-        sec_nivel = SeccionCaracteristica(
-            datos_mt["nivel_tension"]["titulo"],
-            datos_mt["nivel_tension"]["opciones"]
-        )
-        sec_nivel.seleccion_hecha.connect(self._on_seleccion)
-        self.secciones_widgets["nivel_tension"] = sec_nivel
-        self.seccion_mt.agregar_widget(sec_nivel)
-
-        # 3. Familia de la celda
-        sec_familia = SeccionCaracteristica(
-            datos_mt["familia_celda"]["titulo"],
-            datos_mt["familia_celda"]["opciones"],
-            nota="Nota: celda cambia según la selección de familia"
-        )
-        sec_familia.seleccion_hecha.connect(self._on_seleccion_familia)
-        self.secciones_widgets["familia_celda"] = sec_familia
-        self.seccion_mt.agregar_widget(sec_familia)
-
-        # 4. Celda
-        sec_celda = SeccionCaracteristica(
-            datos_mt["celda"]["titulo"],
-            datos_mt["celda"]["dependencias"].get("AIS", [])
-        )
-        sec_celda.seleccion_hecha.connect(self._on_seleccion)
-        self.secciones_widgets["celda"] = sec_celda
-        self.seccion_mt.agregar_widget(sec_celda)
-
-        # 5. Condiciones Generales
-        sec_condiciones = SeccionCaracteristica(
-            datos_mt["condiciones_generales"]["titulo"],
-            datos_mt["condiciones_generales"]["opciones"],
-            nota="Se empieza a agregar información a partir de aquí"
-        )
-        sec_condiciones.seleccion_hecha.connect(self._on_seleccion)
-        self.secciones_widgets["condiciones_generales"] = sec_condiciones
-        self.seccion_mt.agregar_widget(sec_condiciones)
-
-        # 6. Características generales
-        sec_caract = SeccionCaracteristica(
-            datos_mt["caracteristicas_generales"]["titulo"],
-            datos_mt["caracteristicas_generales"]["opciones"]
-        )
-        sec_caract.seleccion_hecha.connect(self._on_seleccion)
-        self.secciones_widgets["caracteristicas_generales"] = sec_caract
-        self.seccion_mt.agregar_widget(sec_caract)
-
-        # 7. Clases de Celdas
-        sec_clases = SeccionCaracteristica(
-            datos_mt["clases_celdas"]["titulo"],
-            datos_mt["clases_celdas"]["opciones"],
-            tipo="multiple"
-        )
-        sec_clases.seleccion_hecha.connect(self._on_seleccion)
-        self.secciones_widgets["clases_celdas"] = sec_clases
-        self.seccion_mt.agregar_widget(sec_clases)
-
-        # 8. Killin products
-        sec_killin = SeccionCaracteristica(
-            datos_mt["killin_products"]["titulo"],
-            datos_mt["killin_products"]["opciones"]
-        )
-        sec_killin.seleccion_hecha.connect(self._on_seleccion)
-        self.secciones_widgets["killin_products"] = sec_killin
-        self.seccion_mt.agregar_widget(sec_killin)
-
-        # 9. Documentos
-        sec_docs = SeccionCaracteristica(
-            datos_mt["documentos"]["titulo"],
-            datos_mt["documentos"]["opciones"]
-        )
-        sec_docs.seleccion_hecha.connect(self._on_seleccion)
-        self.secciones_widgets["documentos"] = sec_docs
-        self.seccion_mt.agregar_widget(sec_docs)
-
-        # 10. Pruebas FAT
-        sec_fat = SeccionCaracteristica(
-            datos_mt["pruebas_fat"]["titulo"],
-            datos_mt["pruebas_fat"]["opciones"]
-        )
-        sec_fat.seleccion_hecha.connect(self._on_seleccion)
-        self.secciones_widgets["pruebas_fat"] = sec_fat
-        self.seccion_mt.agregar_widget(sec_fat)
-
-        self.layout_contenido.addWidget(self.seccion_mt)
-
+    def _crear_secciones_desde_json(self):
+       """Crea todas las secciones del JSON DINAMICAMENTE"""
+       for nombre_seccion,datos_seccion in DATOS_SISTEMA.items():
+            #crer seccion colapsable para cada seccion principal del json
+            seccion_colapsable = SeccionColapsable(nombre_seccion)
+            
+            # crear las caracteristicas dentro de cada seccion
+            self._crear_caracteristicas_seccion(seccion_colapsable, nombre_seccion, datos_seccion)
+            
+            # agregar al layout
+            self.layout_scroll.addWidget(seccion_colapsable)
+            
+            # guardar referencia para futuras actualizaciones
+            self.secciones_widgets[nombre_seccion] = seccion_colapsable
+    
+    def _crear_caracteristicas_seccion(self, seccion_colapsable, nombre_seccion, datos_seccion):
+         """crea las caracteristicas dentro de una seccion colapsable segun el json""" 
+         for clave, config in datos_seccion.items():
+             # verifica que sea un diccionario con configuracion valida
+            if not isinstance(config, dict) or "titulo" not in config:
+                continue
+             
+            titulo = config.get("titulo", clave)
+            opciones = config.get("opciones", [])
+            nota = config.get("nota", "")
+            tipo = config.get("tipo", "")
+            
+            # si tiene dependencias (como "celda"), mostrar  mensaje inicial
+            if "dependencias" in config:
+                opciones = ["Seleccione las opciones validad para acceder"]
+            # crear la seccion caracteristicas
+            sec= SeccionCaracteristica(titulo, opciones, nota=nota, tipo=tipo) 
+            sec.seleccion_hecha.connect(self._on_seleccion)
+            
+            # guardar referencia con clave unica:"nombre_secccion.clave"
+            clave_unica = f"{nombre_seccion}.{clave}"
+            self.secciones_widgets[clave_unica] = sec
+            
+            # agregar a la seccion colapsable
+            seccion_colapsable.agregar_widget(sec)
+                         
     def _on_seleccion(self, seccion: str, campo: str, valor: str):
+        """Maneja una selección genérica"""
         self.selecciones[campo] = valor
-        self.contenido_actualizado.emit(self.selecciones)
+        
+        #buscar si hay capos con dependencias que actualizar
+        self._actualizar_dependencias()
+        
+        self .contenido_actualizado.emit(self.selecciones)
 
-    def _on_seleccion_familia(self, seccion: str, campo: str, valor: str):
-        self.selecciones[campo] = valor
-
-        datos_celda = DATOS_SISTEMA["Sección de Media Tensión"]["celda"]
-        nuevas_opciones = datos_celda["dependencias"].get(valor, [])
-
-        sec_celda_actual = self.secciones_widgets.get("celda")
-        if sec_celda_actual:
-            idx = self.seccion_mt.indice_de(sec_celda_actual)
-            sec_celda_actual.setParent(None)
-            sec_celda_actual.deleteLater()
-
-            nueva_sec_celda = SeccionCaracteristica(
-                datos_celda["titulo"],
-                nuevas_opciones
-            )
-            nueva_sec_celda.seleccion_hecha.connect(self._on_seleccion)
-            self.secciones_widgets["celda"] = nueva_sec_celda
-            self.seccion_mt.insertar_widget(idx, nueva_sec_celda)
-
-        self.contenido_actualizado.emit(self.selecciones)
-
-
+    def _actualizar_dependencias(self):
+        """Actualizar un campo especifico que tiene dopendencias"""
+        for nombre_seccion,datos_seccion in DATOS_SISTEMA.items():
+            for clave,config in datos_seccion.items():
+                if not isinstance(config, dict):
+                    continue
+                if "dependencias"  in config:
+                    self._actualizar_campo_con_dependencias(nombre_seccion, clave, config)
+    
+    def _actualizar_campo_con_dependencias(self, nombre_seccion, clave, config):
+        """Actualizar un campo especifico que tiene dependencias"""
+        dependencias = config.get("dependencias", {})
+        titulo = config.get("titulo", clave)
+        
+        # Obtener valores seleccionados para navegar las dependencias
+        # para media tension : familia -> tension -> tipo 
+        familia = self.selecciones.get("Familia de la celda", "")
+        tension = self.selecciones.get("Nivel de tensión", "")
+        tipo = self.selecciones.get("Tipo de celda", "")
+        
+        # navegar las dependencias
+        nuevas_opciones = []
+        if familia in dependencias:
+            if tension in dependencias[familia]:
+                if tipo in dependencias[familia][tension]:
+                    nuevas_opciones = dependencias[familia][tension][tipo]
+                    
+        if not nuevas_opciones:
+            nuevas_opciones = ["Seleccione tipo, tensión y familia"]
+            
+        # Buscar y actualizar el widget
+        clave_unica = f"{nombre_seccion}.{clave}"
+        sec_actual = self.secciones_widgets[clave_unica]
+        
+        if sec_actual:
+            seccion_colapsable = self.secciones_widgets[nombre_seccion]
+            if seccion_colapsable:
+                idx = seccion_colapsable.indice_de(sec_actual)
+                
+                sec_actual.setParent(None) 
+                sec_actual.deleteLater()
+                
+                nueva_sec = SeccionCaracteristica(titulo, nuevas_opciones)
+                nueva_sec.seleccion_hecha.connect(self._on_seleccion)
+                
+                self.secciones_widgets[clave_unica] = nueva_sec
+                seccion_colapsable.insertar_widget(idx, nueva_sec)  # ← usar insertar_widget             
+            
+       
 class PrevisualizadorDocumento(QFrame):
     """Panel derecho que muestra la vista previa del documento"""
 
@@ -714,7 +659,7 @@ class PrevisualizadorDocumento(QFrame):
 
         tiene_contenido = False
         for campo, valor in selecciones.items():
-            if valor and valor not in ["No aplica", ""]:
+            if valor and valor not in ["No aplica", "", "Seleccione tipo, tensión y familia"]:
                 tiene_contenido = True
                 break
 
@@ -723,7 +668,7 @@ class PrevisualizadorDocumento(QFrame):
             return
 
         # ====== ENCABEZADO ======
-        titulo_doc = QLabel("TABLEROS DE DISTRIBUCIÓN ELÉCTRICA")
+        titulo_doc = QLabel("lICITACION CTS - GLOSAS ")
         titulo_doc.setAlignment(Qt.AlignmentFlag.AlignCenter)
         titulo_doc.setStyleSheet("""
             font-size: 18px; font-family: 'Titillium Web';
@@ -756,6 +701,10 @@ class PrevisualizadorDocumento(QFrame):
         celda = selecciones.get("Celda", "")
         nivel_tension = selecciones.get("Nivel de tensión", "")
         tipo_celda = selecciones.get("Tipo de celda", "")
+
+        # Ignorar el mensaje placeholder
+        if celda == "Seleccione tipo, tensión y familia":
+            celda = ""
 
         titulo_seccion = "Celdas de media tensión"
         if celda and nivel_tension:
@@ -867,6 +816,11 @@ class PrevisualizadorDocumento(QFrame):
     def _generar_condiciones(self, sel: dict) -> str:
         celda = sel.get("Celda", "")
         nivel = sel.get("Nivel de tensión", "")
+        
+        # Ignorar placeholder
+        if celda == "Seleccione tipo, tensión y familia":
+            celda = ""
+            
         texto = "Las condiciones generales de operación son:\n\n"
         if nivel:
             texto += f"• Tensión nominal: {nivel}\n"
@@ -882,6 +836,11 @@ class PrevisualizadorDocumento(QFrame):
     def _generar_caracteristicas(self, sel: dict) -> str:
         celda = sel.get("Celda", "")
         familia = sel.get("Familia de la celda", "")
+        
+        # Ignorar placeholder
+        if celda == "Seleccione tipo, tensión y familia":
+            celda = ""
+            
         texto = "Características técnicas generales:\n\n"
         if celda:
             texto += f"• Tipo de celda: {celda}\n"
@@ -954,4 +913,3 @@ class EditorGlosa(QWidget):
         self.panel_contenido.contenido_actualizado.connect(
             self.previsualizador.actualizar_documento
         )
-        
