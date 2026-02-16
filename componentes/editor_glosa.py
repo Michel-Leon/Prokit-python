@@ -655,130 +655,155 @@ class PrevisualizadorDocumento(QFrame):
                         sub.widget().deleteLater()
 
     def actualizar_documento(self, selecciones: dict):
+        """Actualiza el documento con contenido de la base de datos"""
+        from database.consultas import obtener_contenido_por_selecciones
+        from PyQt6.QtGui import QPixmap
+        import os
+        
         self._limpiar_pagina()
-
-        tiene_contenido = False
+        
+        # verificar que haya selecciones validas
+        tiene_seleccion = False
         for campo, valor in selecciones.items():
-            if valor and valor not in ["No aplica", "", "Seleccione tipo, tensión y familia"]:
-                tiene_contenido = True
+            if valor and valor not in ["No aplica", "Seleccione las opciones anteriores", "Seleccione tipo, tensión y familia"]:
+                tiene_seleccion = True
                 break
-
-        if not tiene_contenido:
+        if not tiene_seleccion:
             self._mostrar_vacio()
             return
-
+        
+        # Obtener contenido de la base de datos
+        contenidos = obtener_contenido_por_selecciones(selecciones)
+        
+        if not contenidos:
+            self._mostrar_vacio()
+            return
+        
         # ====== ENCABEZADO ======
-        titulo_doc = QLabel("lICITACION CTS - GLOSAS ")
-        titulo_doc.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        celda = selecciones.get("Celda", "")
+        nivel = selecciones.get("Nivel de tensión", "")
+        
+        # ignorar placeholders
+        if celda in ["Seleccione las opciones anteriores", "Seleccione tipo, tensión y familia"]:
+            celda = ""
+        
+        titulo_doc = QLabel(f"1. Celdas de media tensión {celda} {nivel}")
         titulo_doc.setStyleSheet("""
             font-size: 18px; font-family: 'Titillium Web';
-            color: #888; font-weight: bold; padding: 10px 0;
+            font-weight: bold; color: #333; padding: 10px 0;
         """)
         self.layout_pagina.addWidget(titulo_doc)
-
-        subtitulo = QLabel("ESPECIFICACIONES TÉCNICAS")
-        subtitulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        subtitulo.setStyleSheet("""
-            font-size: 14px; font-family: 'Titillium Web';
-            color: #888; padding-bottom: 10px;
-        """)
-        self.layout_pagina.addWidget(subtitulo)
-
-        meta = QLabel("Fecha: --/--/2025     Código:     Proyecto:     Versión: N°.1")
-        meta.setStyleSheet("""
-            font-size: 11px; font-family: 'Titillium Web';
-            color: #999; padding: 5px 0 15px 0;
-        """)
-        self.layout_pagina.addWidget(meta)
-
-        sep = QFrame()
-        sep.setFixedHeight(1)
-        sep.setStyleSheet("background-color: #E0E0E0;")
-        self.layout_pagina.addWidget(sep)
-        self.layout_pagina.addSpacing(10)
-
-        # ====== SECCIÓN 1 ======
-        celda = selecciones.get("Celda", "")
-        nivel_tension = selecciones.get("Nivel de tensión", "")
-        tipo_celda = selecciones.get("Tipo de celda", "")
-
-        # Ignorar el mensaje placeholder
-        if celda == "Seleccione tipo, tensión y familia":
-            celda = ""
-
-        titulo_seccion = "Celdas de media tensión"
-        if celda and nivel_tension:
-            titulo_seccion = f"Celdas de media tensión {celda} {nivel_tension}"
-        elif celda:
-            titulo_seccion = f"Celdas de media tensión {celda}"
-
-        lbl_seccion = QLabel(f"1.  {titulo_seccion}")
-        lbl_seccion.setStyleSheet("""
-            font-size: 16px; font-family: 'Titillium Web';
-            font-weight: bold; color: #333; padding: 10px 0 5px 0;
-        """)
-        self.layout_pagina.addWidget(lbl_seccion)
-
-        num = 1
-
-        if celda or tipo_celda:
-            self._agregar_subseccion(f"1.{num} Descripción",
-                                      self._generar_descripcion(selecciones))
-            num += 1
-
-        if selecciones.get("Condiciones Generales", "") == "Aplica":
-            self._agregar_subseccion(f"1.{num} Condiciones Generales",
-                                      self._generar_condiciones(selecciones))
-            num += 1
-
-        if selecciones.get("Características generales", "") == "Aplica":
-            self._agregar_subseccion(f"1.{num} Características generales",
-                                      self._generar_caracteristicas(selecciones))
-            num += 1
-
-        clases = selecciones.get("Clases de Celdas", "")
-        if clases:
-            self._agregar_subseccion(
-                f"1.{num} Clases de Celdas",
-                f"Clases seleccionadas: {clases}\n\n"
-                "Las celdas deben cumplir con las clasificaciones "
-                "indicadas según normas IEC aplicables."
-            )
-            num += 1
-
-        killin = selecciones.get("Killin products", "")
-        if killin:
-            self._agregar_subseccion(
-                f"1.{num} Killin Products",
-                f"Producto seleccionado: {killin}\n\n"
-                "El sistema incluirá los componentes de protección "
-                "y monitoreo especificados."
-            )
-            num += 1
-
-        if selecciones.get("Documentos", "") == "Aplica":
-            self._agregar_subseccion(
-                f"1.{num} Documentos",
-                "Se deberán entregar los siguientes documentos:\n\n"
-                "• Planos de fabricación\n"
-                "• Manuales de operación y mantenimiento\n"
-                "• Certificados de pruebas\n"
-                "• Diagramas unifilares"
-            )
-            num += 1
-
-        if selecciones.get("Pruebas FAT", "") == "Aplica":
-            self._agregar_subseccion(
-                f"1.{num} Pruebas FAT",
-                "Se realizarán pruebas de aceptación en fábrica (FAT) que incluyen:\n\n"
-                "• Pruebas de rutina según IEC 62271-200\n"
-                "• Verificación de circuitos de control\n"
-                "• Pruebas de aislamiento\n"
-                "• Verificación de enclavamientos mecánicos"
-            )
-
+        
+        # ====== CONTENIDO POR SECCIONES ======
+        seccion_actual = ""
+        
+        for item in contenidos:
+            # Si cambió la sección, mostrar título de sección
+            if item['seccion_numero'] != seccion_actual:
+                seccion_actual = item['seccion_numero']
+                lbl_seccion = QLabel(f"{item['seccion_numero']} {item['seccion_nombre']}")
+                lbl_seccion.setStyleSheet("""
+                    font-size: 14px; font-family: 'Titillium Web';
+                    font-weight: bold; color: #333; padding: 15px 0 5px 0;
+                """)
+                self.layout_pagina.addWidget(lbl_seccion)
+            
+            # Mostrar contenido según el tipo
+            if item['tipo'] == 'texto':
+                self._agregar_texto(item['texto'])
+            
+            elif item['tipo'] == 'lista':
+                self._agregar_lista(item['texto'])
+            
+            elif item['tipo'] == 'imagen':
+                if item.get('imagen'):
+                    self._agregar_imagen(item['imagen'])
+        
         self.layout_pagina.addStretch()
 
+
+    def _agregar_texto(self, texto: str):
+        """Agrega un párrafo de texto"""
+        lbl = QLabel(texto)
+        lbl.setWordWrap(True)
+        lbl.setStyleSheet("""
+            font-size: 11px; font-family: 'Titillium Web';
+            color: #333; line-height: 1.6; padding: 5px 0;
+        """)
+        self.layout_pagina.addWidget(lbl)
+
+
+    def _agregar_lista(self, texto: str):
+        """Agrega una lista (items separados por ;)"""
+        items = texto.split(';')
+        
+        for item in items:
+            contenedor = QWidget()
+            layout = QHBoxLayout(contenedor)
+            layout.setContentsMargins(20, 2, 0, 2)
+            layout.setSpacing(10)
+            
+            # Viñeta
+            bullet = QLabel("•")
+            bullet.setStyleSheet("font-size: 14px; color: #333;")
+            bullet.setFixedWidth(15)
+            
+            # Texto
+            lbl = QLabel(item.strip())
+            lbl.setStyleSheet("""
+                font-size: 11px; font-family: 'Titillium Web'; color: #333;
+            """)
+            
+            layout.addWidget(bullet)
+            layout.addWidget(lbl)
+            layout.addStretch()
+            
+            self.layout_pagina.addWidget(contenedor)
+
+
+    def _agregar_imagen(self, imagen: dict):
+        """Agrega una imagen con su pie"""
+        import os
+        from PyQt6.QtGui import QPixmap
+        
+        # Contenedor centrado
+        contenedor = QWidget()
+        layout = QVBoxLayout(contenedor)
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.setSpacing(5)
+        
+        # Cargar imagen
+        ruta_base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        ruta_imagen = os.path.join(ruta_base, "datos", imagen['ruta'])
+        
+        lbl_imagen = QLabel()
+        if os.path.exists(ruta_imagen):
+            pixmap = QPixmap(ruta_imagen)
+            pixmap = pixmap.scaled(
+                imagen['ancho'], imagen['alto'],
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation
+            )
+            lbl_imagen.setPixmap(pixmap)
+        else:
+            lbl_imagen.setText(f"[Imagen no encontrada: {imagen['nombre']}]")
+            lbl_imagen.setStyleSheet("color: red; padding: 20px;")
+        
+        lbl_imagen.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(lbl_imagen)
+        
+        # Pie de imagen
+        if imagen['pie']:
+            lbl_pie = QLabel(imagen['pie'])
+            lbl_pie.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            lbl_pie.setStyleSheet("""
+                font-size: 10px; font-family: 'Titillium Web';
+                font-weight: bold; color: #333; padding: 5px 0;
+            """)
+            layout.addWidget(lbl_pie)
+    
+        self.layout_pagina.addWidget(contenedor)
+        
     def _agregar_subseccion(self, titulo: str, texto: str):
         lbl_titulo = QLabel(titulo)
         lbl_titulo.setStyleSheet("""

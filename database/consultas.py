@@ -1,10 +1,7 @@
-"""
-Funciones para consultar la base de datos.
-Estas funciones se usan desde el editor de glosas.
-"""
+"""Funciones para consultar contenido según las selecciones del usuario"""
 
 import json
-from .conexion import conectar, ejecutar_consulta
+from .conexion import conectar
 
 
 def obtener_contenido_por_selecciones(selecciones: dict) -> list:
@@ -12,8 +9,7 @@ def obtener_contenido_por_selecciones(selecciones: dict) -> list:
     Obtiene el contenido que coincide con las selecciones del usuario.
     
     Parámetros:
-        selecciones: Diccionario con las selecciones del usuario
-                     Ejemplo: {"Familia de la celda": "AIS", "Celda": "SM6"}
+        selecciones: {"Familia de la celda": "AIS", "Celda": "SM6", ...}
     
     Retorna:
         Lista de diccionarios con el contenido a mostrar
@@ -42,8 +38,11 @@ def obtener_contenido_por_selecciones(selecciones: dict) -> list:
     resultados = []
     
     for row in cursor.fetchall():
-        # Convertir las condiciones de JSON a diccionario
-        condiciones = json.loads(row['condiciones'])
+        # Convertir condiciones de JSON a diccionario
+        try:
+            condiciones = json.loads(row['condiciones'])
+        except:
+            continue
         
         # Verificar si las selecciones cumplen TODAS las condiciones
         cumple = True
@@ -55,89 +54,67 @@ def obtener_contenido_por_selecciones(selecciones: dict) -> list:
         
         # Si cumple todas las condiciones, agregar a resultados
         if cumple:
-            resultados.append({
+            item = {
                 'id': row['id'],
                 'titulo': row['titulo'],
                 'texto': row['texto'],
                 'tipo': row['tipo'],
+                'orden': row['orden'],
                 'seccion_nombre': row['seccion_nombre'],
                 'seccion_numero': row['seccion_numero'],
-            })
+            }
+            
+            # Si es tipo imagen, obtener los datos de la imagen
+            if row['tipo'] == 'imagen':
+                imagen_data = obtener_imagen(row['id'], cursor)
+                if imagen_data:
+                    item['imagen'] = imagen_data
+            
+            resultados.append(item)
     
     conn.close()
     return resultados
 
 
-def obtener_imagenes_contenido(contenido_id: int) -> list:
+def obtener_imagen(contenido_id: int, cursor=None) -> dict:
     """
-    Obtiene las imágenes asociadas a un contenido.
+    Obtiene la imagen asociada a un contenido.
+    
+    Parámetros:
+        contenido_id: ID del contenido
+        cursor: Cursor de la conexión (opcional)
     
     Retorna:
-        Lista de diccionarios con información de las imágenes
+        Diccionario con datos de la imagen o None
     """
-    sql = '''
+    cerrar_conexion = False
+    
+    if cursor is None:
+        conn = conectar()
+        cursor = conn.cursor()
+        cerrar_conexion = True
+    
+    cursor.execute('''
         SELECT nombre_archivo, ruta, pie_de_imagen, ancho, alto
         FROM imagen
         WHERE contenido_id = ?
-    '''
+    ''', (contenido_id,))
     
-    resultados = ejecutar_consulta(sql, (contenido_id,))
+    row = cursor.fetchone()
     
-    imagenes = []
-    for row in resultados:
-        imagenes.append({
+    if cerrar_conexion:
+        conn.close()
+    
+    if row:
+        return {
             'nombre': row['nombre_archivo'],
             'ruta': row['ruta'],
             'pie': row['pie_de_imagen'],
-            'ancho': row['ancho'],
-            'alto': row['alto']
-        })
+            'ancho': row['ancho'] if row['ancho'] else 400,
+            'alto': row['alto'] if row['alto'] else 300
+        }
     
-    return imagenes
-
-
-def obtener_tabla_contenido(contenido_id: int) -> dict:
-    """
-    Obtiene una tabla asociada a un contenido.
-    
-    Retorna:
-        Diccionario con la estructura de la tabla y sus filas
-    """
-    conn = conectar()
-    cursor = conn.cursor()
-    
-    # Obtener la tabla
-    cursor.execute('''
-        SELECT id, nombre, columnas
-        FROM tabla_datos
-        WHERE contenido_id = ?
-    ''', (contenido_id,))
-    
-    tabla_row = cursor.fetchone()
-    
-    if not tabla_row:
-        conn.close()
-        return None
-    
-    # Obtener las filas
-    cursor.execute('''
-        SELECT datos
-        FROM tabla_fila
-        WHERE tabla_id = ?
-        ORDER BY fila_numero
-    ''', (tabla_row['id'],))
-    
-    filas = []
-    for row in cursor.fetchall():
-        filas.append(json.loads(row['datos']))
-    
-    conn.close()
-    
-    return {
-        'nombre': tabla_row['nombre'],
-        'columnas': json.loads(tabla_row['columnas']),
-        'filas': filas
-    }
+    return None
 
 
 def obtener_todas_las_secciones() -> list:
@@ -147,13 +124,17 @@ def obtener_todas_las_secciones() -> list:
     Retorna:
         Lista de secciones ordenadas
     """
-    sql = '''
+    conn = conectar()
+    cursor = conn.cursor()
+    
+    cursor.execute('''
         SELECT id, nombre, numero, orden
         FROM seccion
         ORDER BY orden
-    '''
+    ''')
     
-    resultados = ejecutar_consulta(sql)
+    resultados = cursor.fetchall()
+    conn.close()
     
     secciones = []
     for row in resultados:
