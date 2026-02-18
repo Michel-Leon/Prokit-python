@@ -921,7 +921,7 @@ class EditorGlosa(QWidget):
         
         # Botón Exportar a Word
         self.btn_exportar = QPushButton("  Exportar a Word")
-        self.btn_exportar.setIcon(qta.icon('fa5s.file-word', color='#0065bb'))
+        self.btn_exportar.setIcon(qta.icon('fa5s.file-word', color='#ffffff'))
         self.btn_exportar.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_exportar.setStyleSheet("""
             QPushButton {
