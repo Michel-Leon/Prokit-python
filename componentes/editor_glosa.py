@@ -918,6 +918,29 @@ class EditorGlosa(QWidget):
         layout_bread.addWidget(icono_edit)
         layout_bread.addWidget(lbl_redaccion)
         layout_bread.addStretch()
+        
+        # Botón Exportar a Word
+        self.btn_exportar = QPushButton("  Exportar a Word")
+        self.btn_exportar.setIcon(qta.icon('fa5s.file-word', color='#0065bb'))
+        self.btn_exportar.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_exportar.setStyleSheet("""
+            QPushButton {
+                background-color: #0065bb;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 8px 16px;
+                font-size: 12px;
+                font-family: 'Titillium Web';
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #0056a0;
+            }
+        """)
+        self.btn_exportar.clicked.connect(self.exportar_a_word)
+        layout_bread.addWidget(self.btn_exportar)
+        
         layout_principal.addWidget(breadcrumb)
 
         # Contenido principal
@@ -938,3 +961,68 @@ class EditorGlosa(QWidget):
         self.panel_contenido.contenido_actualizado.connect(
             self.previsualizador.actualizar_documento
         )
+    def exportar_a_word(self):
+        """Exporta el documento actual a Word"""
+        from PyQt6.QtWidgets import QFileDialog, QMessageBox
+        from database.consultas import obtener_contenido_por_selecciones
+        from exportadores.exportar_word import exportar_glosa_a_word
+        
+        # Obtener selecciones actuales
+        selecciones = self.panel_contenido.selecciones
+        
+        # Verificar que hay contenido
+        if not selecciones:
+            QMessageBox.warning(
+                self, 
+                "Sin contenido", 
+                "No hay contenido para exportar.\nPor favor, seleccione las características del sistema."
+            )
+            return
+        
+        # Obtener contenido de la base de datos
+        contenidos = obtener_contenido_por_selecciones(selecciones)
+        
+        if not contenidos:
+            QMessageBox.warning(
+                self, 
+                "Sin contenido", 
+                "No se encontró contenido para las selecciones actuales."
+            )
+            return
+        
+        # Preparar nombre de archivo sugerido
+        nombre_proyecto = self.datos_proyecto.get('nombre', 'Glosa')
+        version = self.datos_proyecto.get('version', 'v1')
+        nombre_archivo = f"{nombre_proyecto}_Glosa_{version}.docx"
+        
+        # Diálogo para guardar archivo
+        ruta_archivo, _ = QFileDialog.getSaveFileName(
+            self,
+            "Guardar documento Word",
+            nombre_archivo,
+            "Documento Word (*.docx)"
+        )
+        
+        if not ruta_archivo:
+            return  # Usuario canceló
+        
+        # Exportar
+        exito = exportar_glosa_a_word(
+            datos_proyecto=self.datos_proyecto,
+            contenidos=contenidos,
+            selecciones=selecciones,
+            ruta_archivo=ruta_archivo
+        )
+        
+        if exito:
+            QMessageBox.information(
+                self,
+                "Exportación exitosa",
+                f"El documento se guardó correctamente en:\n{ruta_archivo}"
+            )
+        else:
+            QMessageBox.critical(
+                self,
+                "Error",
+                "Hubo un error al exportar el documento."
+            )    
