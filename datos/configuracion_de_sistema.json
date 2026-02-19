@@ -41,10 +41,6 @@
 
             }
         },
-        "condiciones_generales": {
-            "titulo": "Condiciones Generales",
-            "opciones": ["Aplica", "No aplica"]
-        },
         "caracteristicas_generales": {
             "titulo": "Características generales",
             "opciones": ["Aplica", "No aplica"]

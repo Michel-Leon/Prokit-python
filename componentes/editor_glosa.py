@@ -469,6 +469,13 @@ class PanelContenido(QFrame):
         """Maneja una selección genérica"""
         self.selecciones[campo] = valor
         
+        # DEBUG: Ver qué selecciones se están haciendo
+        print("=" * 50)
+        print(f"Botón presionado: {campo} = {valor}")
+        print("Todas las selecciones actuales:")
+        for c, v in self.selecciones.items():
+            print(f"  '{c}': '{v}'")
+        print("=" * 50)
         #buscar si hay capos con dependencias que actualizar
         self._actualizar_dependencias()
         
@@ -718,6 +725,10 @@ class PrevisualizadorDocumento(QFrame):
             elif item['tipo'] == 'imagen':
                 if item.get('imagen'):
                     self._agregar_imagen(item['imagen'])
+                    
+            elif item['tipo'] == 'tabla':
+                if item.get('tabla'):
+                    self._agregar_tabla(item.get('titulo', ''), item['tabla'])        
         
         self.layout_pagina.addStretch()
 
@@ -877,6 +888,75 @@ class PrevisualizadorDocumento(QFrame):
                   "• Tipo de aislamiento: SF6 / Aire\n"
                   "• Vida útil mínima: 30 años")
         return texto
+    
+    def _agregar_tabla(self, titulo: str, tabla_data: dict):
+        """Agrega una tabla con estilo"""
+        from PyQt6.QtWidgets import QTableWidget, QTableWidgetItem, QHeaderView
+        from PyQt6.QtGui import QFont
+    
+        # Título de la tabla
+        if titulo:
+            lbl_titulo = QLabel(titulo)
+            lbl_titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            lbl_titulo.setStyleSheet("""
+                font-size: 11px; font-family: 'Titillium Web';
+                font-weight: bold; color: #333; padding: 10px 0 5px 0;
+            """)
+            self.layout_pagina.addWidget(lbl_titulo)
+        
+        columnas = tabla_data.get('columnas', [])
+        filas = tabla_data.get('filas', [])
+        
+        if not columnas or not filas:
+            return
+    
+        # Crear tabla
+        tabla = QTableWidget()
+        tabla.setRowCount(len(filas))
+        tabla.setColumnCount(len(columnas))
+        tabla.setHorizontalHeaderLabels(columnas)
+        
+        # Estilo de la tabla
+        tabla.setStyleSheet("""
+            QTableWidget {
+                background-color: white;
+                gridline-color: #E0E0E0;
+                font-size: 10px;
+                font-family: 'Titillium Web';
+            }
+            QTableWidget::item {
+                padding: 8px;
+                color: #333;
+                border-bottom: 1px solid #E0E0E0;
+            }
+            QHeaderView::section {
+                background-color: #0065bb;
+                color: white;
+                font-weight: bold;
+                font-size: 10px;
+                padding: 8px;
+                border: none;
+            }
+        """)
+        
+        # Llenar datos
+        for fila_idx, fila_datos in enumerate(filas):
+            for col_idx, valor in enumerate(fila_datos):
+                item = QTableWidgetItem(str(valor))
+                tabla.setItem(fila_idx, col_idx, item)
+        
+            # Ajustar tamaño
+            tabla.horizontalHeader().setStretchLastSection(True)
+            tabla.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+            tabla.verticalHeader().setVisible(False)
+            tabla.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+            
+            # Calcular altura según número de filas
+            altura = 40 + (len(filas) * 35)  # Header + filas
+            tabla.setFixedHeight(min(altura, 400))  # Máximo 400px
+
+            self.layout_pagina.addWidget(tabla)
+            self.layout_pagina.addSpacing(10)
 
 
 class EditorGlosa(QWidget):

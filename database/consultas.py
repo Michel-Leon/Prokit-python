@@ -70,6 +70,12 @@ def obtener_contenido_por_selecciones(selecciones: dict) -> list:
                 if imagen_data:
                     item['imagen'] = imagen_data
             
+            # Si es tipo tabla, obtener los datos de la tabla
+            if row['tipo'] == 'tabla':
+                tabla_data = obtener_tabla(row['id'], cursor)
+                if tabla_data:
+                    item['tabla'] = tabla_data        
+            
             resultados.append(item)
     
     conn.close()
@@ -146,3 +152,61 @@ def obtener_todas_las_secciones() -> list:
         })
     
     return secciones
+def obtener_tabla(contenido_id: int, cursor=None) -> dict:
+    """
+    Obtiene una tabla asociada a un contenido.
+    
+    Retorna:
+        Diccionario con estructura: {nombre, columnas, filas}
+    """
+    cerrar_conexion = False
+    
+    if cursor is None:
+        conn = conectar()
+        cursor = conn.cursor()
+        cerrar_conexion = True
+    
+    # Obtener metadata de la tabla
+    cursor.execute('''
+        SELECT id, nombre, columnas
+        FROM tabla_datos
+        WHERE contenido_id = ?
+    ''', (contenido_id,))
+    
+    tabla_row = cursor.fetchone()
+    
+    if not tabla_row:
+        if cerrar_conexion:
+            conn.close()
+        return None
+    
+    # Obtener las filas
+    cursor.execute('''
+        SELECT datos
+        FROM tabla_fila
+        WHERE tabla_id = ?
+        ORDER BY fila_numero
+    ''', (tabla_row['id'],))
+    
+    filas = []
+    for row in cursor.fetchall():
+        try:
+            fila_datos = json.loads(row['datos'])
+            filas.append(fila_datos)
+        except:
+            continue
+    
+    if cerrar_conexion:
+        conn.close()
+    
+    # Parsear columnas
+    try:
+        columnas = json.loads(tabla_row['columnas'])
+    except:
+        columnas = []
+    
+    return {
+        'nombre': tabla_row['nombre'],
+        'columnas': columnas,
+        'filas': filas
+    }
