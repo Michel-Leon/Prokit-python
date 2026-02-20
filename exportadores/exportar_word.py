@@ -146,6 +146,27 @@ class ExportadorWord:
         run.font.size = Pt(11)
         run.font.name = 'Arial'
         parrafo.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+        
+        # Configurar espacio entre palabras para evitar huecos grandes
+        from docx.oxml.ns import qn
+        from docx.oxml import OxmlElement
+        
+        # obtener o crear propiedades del parrafo
+        pPr = parrafo._p.get_or_add_pPr()
+        
+        # Habilitar ajustes de espaciado automatico
+        wordWrap = OxmlElement('w:wordWrap')
+        wordWrap.set(qn('w:val'), 'on')
+        pPr.append(wordWrap)
+        
+        # permirir que word ajuste el espaciado entre cacarteres
+        autoSpaceDE = OxmlElement('w:autoSpaceDE')
+        autoSpaceDE.set(qn('w:val'), '1')
+        pPr.append(autoSpaceDE)
+        
+        autoSpaceDE = OxmlElement('w:autoSpaceDN')
+        autoSpaceDE.set(qn('w:val'), '1')
+        pPr.append(autoSpaceDE)
     
     def _agregar_lista(self, texto: str):
         """Agrega una lista con viñetas"""
