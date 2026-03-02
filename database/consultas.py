@@ -8,16 +8,16 @@ def obtener_contenido_por_selecciones(selecciones: dict) -> list:
     """
     Obtiene el contenido que coincide con las selecciones del usuario.
     
-    Parámetros:
-        selecciones: {"Familia de la celda": "AIS", "Celda": "SM6", ...}
-    
-    Retorna:
-        Lista de diccionarios con el contenido a mostrar
+    Para campos de selección múltiple (como "Clases de Celdas"), 
+    verifica si el valor requerido está CONTENIDO en la selección del usuario.
     """
+    
+    # Campos que son de selección múltiple (separados por coma)
+    CAMPOS_MULTIPLES = ["Clases de Celdas"]
+    
     conn = conectar()
     cursor = conn.cursor()
     
-    # Obtener todos los contenidos con sus reglas
     cursor.execute('''
         SELECT 
             c.id,
@@ -38,21 +38,32 @@ def obtener_contenido_por_selecciones(selecciones: dict) -> list:
     resultados = []
     
     for row in cursor.fetchall():
-        # Convertir condiciones de JSON a diccionario
         try:
             condiciones = json.loads(row['condiciones'])
         except:
             continue
         
-        # Verificar si las selecciones cumplen TODAS las condiciones
+        # Verificar si las selecciones cumplen las condiciones
         cumple = True
         for campo, valor_requerido in condiciones.items():
             valor_usuario = selecciones.get(campo, "")
-            if valor_usuario != valor_requerido:
-                cumple = False
-                break
+            
+            # Si es un campo de selección múltiple
+            if campo in CAMPOS_MULTIPLES:
+                # Convertir la selección del usuario a lista
+                # "IM, QM" -> ["IM", "QM"]
+                valores_usuario = [v.strip() for v in valor_usuario.split(',') if v.strip()]
+                
+                # Verificar si el valor requerido está en la lista del usuario
+                if valor_requerido not in valores_usuario:
+                    cumple = False
+                    break
+            else:
+                # Para campos normales, comparación exacta
+                if valor_usuario != valor_requerido:
+                    cumple = False
+                    break
         
-        # Si cumple todas las condiciones, agregar a resultados
         if cumple:
             item = {
                 'id': row['id'],
@@ -64,17 +75,15 @@ def obtener_contenido_por_selecciones(selecciones: dict) -> list:
                 'seccion_numero': row['seccion_numero'],
             }
             
-            # Si es tipo imagen, obtener los datos de la imagen
             if row['tipo'] == 'imagen':
                 imagen_data = obtener_imagen(row['id'], cursor)
                 if imagen_data:
                     item['imagen'] = imagen_data
             
-            # Si es tipo tabla, obtener los datos de la tabla
             if row['tipo'] == 'tabla':
                 tabla_data = obtener_tabla(row['id'], cursor)
                 if tabla_data:
-                    item['tabla'] = tabla_data        
+                    item['tabla'] = tabla_data
             
             resultados.append(item)
     
