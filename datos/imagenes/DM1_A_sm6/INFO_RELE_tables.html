@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relay Technical Specifications</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #f4f5f7;
+    --white: #ffffff;
+    --border: #c8cdd6;
+    --border-light: #e2e5ea;
+    --header-bg: #1a2236;
+    --header-text: #ffffff;
+    --section-bg: #2c3e6b;
+    --section-text: #ffffff;
+    --row-alt: #f8f9fb;
+    --text-primary: #1a2236;
+    --text-secondary: #3d4a63;
+    --text-mono: #1e3a5f;
+    --accent: #2563eb;
+    --table-shadow: 0 2px 12px rgba(26,34,54,0.10);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    font-family: 'IBM Plex Sans', sans-serif;
+    color: var(--text-primary);
+    padding: 48px 32px;
+    min-height: 100vh;
+  }
+
+  .page-title {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #6b7a99;
+    margin-bottom: 36px;
+  }
+
+  .table-block {
+    background: var(--white);
+    border-radius: 10px;
+    box-shadow: var(--table-shadow);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    margin-bottom: 36px;
+  }
+
+  .table-label {
+    background: var(--header-bg);
+    color: #a8b8d8;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 10px 20px;
+    border-bottom: 2px solid var(--accent);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  thead tr th {
+    background: #1e2d4a;
+    color: #d0daf0;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 13px 20px;
+    text-align: left;
+    border-right: 1px solid #2c3e6b;
+  }
+  thead tr th:last-child { border-right: none; }
+
+  .col-test   { width: 26%; }
+  .col-std    { width: 42%; }
+  .col-val    { width: 32%; }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border-light);
+    transition: background 0.15s;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:nth-child(even) { background: var(--row-alt); }
+  tbody tr:hover { background: #eef2fb; }
+
+  tbody td {
+    padding: 11px 20px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    vertical-align: top;
+    border-right: 1px solid var(--border-light);
+    line-height: 1.55;
+  }
+  tbody td:last-child { border-right: none; }
+
+  .section-row td {
+    background: #eef2f9 !important;
+    color: var(--header-bg);
+    font-weight: 700;
+    font-size: 12.5px;
+    letter-spacing: 0.04em;
+    padding: 9px 20px;
+    border-top: 2px solid var(--accent);
+    border-bottom: 1px solid #c5cedf;
+  }
+
+  .test-name {
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+  .test-name.sub {
+    padding-left: 4px;
+  }
+
+  .std-code {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    color: #2a4a7f;
+    background: #eef3fb;
+    border-radius: 3px;
+    padding: 1px 5px;
+    display: inline-block;
+    margin-bottom: 1px;
+    letter-spacing: 0.01em;
+  }
+
+  .val-text {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--text-mono);
+    font-weight: 500;
+  }
+
+  ul.val-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  ul.val-list li {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    color: var(--text-mono);
+    font-weight: 500;
+    padding: 2px 0 2px 14px;
+    position: relative;
+  }
+  ul.val-list li::before {
+    content: '•';
+    position: absolute;
+    left: 2px;
+    color: var(--accent);
+    font-size: 13px;
+    line-height: 1.3;
+  }
+</style>
+</head>
+<body>
+
+<p class="page-title">Relay — Technical Specifications &amp; Test Standards</p>
+
+<!-- TABLE 1: Mechanical -->
+<div class="table-block">
+  <div class="table-label">Table 1 — Mechanical Tests</div>
+  <table>
+    <thead>
+      <tr>
+        <th class="col-test">Test</th>
+        <th class="col-std">Standard &amp; Test class / level</th>
+        <th class="col-val">Test value</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="section-row"><td colspan="3">Device in operation</td></tr>
+      <tr>
+        <td class="test-name sub">- Vibrations</td>
+        <td><span class="std-code">IEC 60255-21-1, Class II / IEC 60068-2-6, Fc</span></td>
+        <td><span class="val-text">1Gn, 10Hz – 150 HZ</span></td>
+      </tr>
+      <tr>
+        <td class="test-name sub">- Shocks</td>
+        <td><span class="std-code">IEC 60255-21-2, Class II / IEC 60068-2-27, Ea</span></td>
+        <td><span class="val-text">10Gn/11ms</span></td>
+      </tr>
+      <tr>
+        <td class="test-name sub">- Seismic</td>
+        <td><span class="std-code">IEC 60255-21-3 Method A, Class II</span></td>
+        <td><span class="val-text">2G horizontal / 1G vertical, 1Hz–35Hz</span></td>
+      </tr>
+      <tr class="section-row"><td colspan="3">Device de-energized</td></tr>
+      <tr>
+        <td class="test-name sub">- Vibrations</td>
+        <td><span class="std-code">IEC 60255-21-1, Class II / IEC 60068-2-6, Fc</span></td>
+        <td><span class="val-text">2Gn, 10Hz – 150 HZ</span></td>
+      </tr>
+      <tr>
+        <td class="test-name sub">- Shocks</td>
+        <td><span class="std-code">IEC 60255-21-2, Class II / IEC 60068-2-27, Ea</span></td>
+        <td><span class="val-text">30Gn/11ms</span></td>
+      </tr>
+      <tr>
+        <td class="test-name sub">- Bump</td>
+        <td><span class="std-code">IEC 60255-21-2, Class II / IEC 60068-2-27, Ea</span></td>
+        <td><span class="val-text">20Gn/16ms</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- TABLE 2: Climatic -->
+<div class="table-block">
+  <div class="table-label">Table 2 — Climatic Tests</div>
+  <table>
+    <thead>
+      <tr>
+        <th class="col-test">Test</th>
+        <th class="col-std">Standard &amp; Test class / level</th>
+        <th class="col-val">Test value</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="section-row"><td colspan="3">Device in operation</td></tr>
+      <tr>
+        <td class="test-name sub">- Dry heat</td>
+        <td><span class="std-code">EN / IEC 60068-2-2, Bd</span></td>
+        <td><span class="val-text">65°C (149°F)</span></td>
+      </tr>
+      <tr>
+        <td class="test-name sub">- Cold</td>
+        <td><span class="std-code">EN / IEC 60068-2-1, Ad</span></td>
+        <td><span class="val-text">-40°C (-40°F)</span></td>
+      </tr>
+      <tr>
+        <td class="test-name sub">- Damp heat, cyclic</td>
+        <td><span class="std-code">EN / IEC 60068-2-30, Db</span></td>
+        <td>
+          <ul class="val-list">
+            <li>From 25°C (77°F) to 55°C (131°F)</li>
+            <li>From 93% RH to 98% RH</li>
+            <li>Testing duration: 6 days</li>
+          </ul>
+        </td>
+      </tr>
+      <tr>
+        <td class="test-name sub">- Damp heat, static</td>
+        <td><span class="std-code">EN / IEC 60068-2-78, Cab</span></td>
+        <td>
+          <ul class="val-list">
+            <li>40°C (104°F)</li>
+            <li>93% RH</li>
+            <li>Testing duration: 10 days</li>
+          </ul>
+        </td>
+      </tr>
+      <tr class="section-row"><td colspan="3">Device in storage</td></tr>
+      <tr>
+        <td class="test-name sub">- Dry heat</td>
+        <td><span class="std-code">EN / IEC 60068-2-2, Bb</span></td>
+        <td><span class="val-text">70°C (158°F)</span></td>
+      </tr>
+      <tr>
+        <td class="test-name sub">- Cold</td>
+        <td><span class="std-code">EN / IEC 60068-2-1, Ab</span></td>
+        <td><span class="val-text">-40°C (-40°F)</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- TABLE 3: EMC -->
+<div class="table-block">
+  <div class="table-label">Table 3 — EMC Tests (Emission &amp; Immunity)</div>
+  <table>
+    <thead>
+      <tr>
+        <th class="col-test">Test</th>
+        <th class="col-std">Standard &amp; Test class / level</th>
+        <th class="col-val">Test value</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="section-row"><td colspan="3">Emission &nbsp;—&nbsp; IEC/EN 60255-26 (ed3)</td></tr>
+      <tr>
+        <td class="test-name sub">- Conducted</td>
+        <td><span class="std-code">EN 55022, Class A / IEC 60255-25 &amp; CISPR 22</span></td>
+        <td><span class="val-text">0.15 – 30 MHz</span></td>
+      </tr>
+      <tr>
+        <td class="test-name sub">- Emitted</td>
+        <td><span class="std-code">EN 55011, Class A / IEC 60255-25 / CISPR 11</span></td>
+        <td><span class="val-text">30 – 1000 MHz</span></td>
+      </tr>
+      <tr class="section-row"><td colspan="3">Immunity &nbsp;—&nbsp; IEC/EN 60255-26 (ed3)</td></tr>
+      <tr>
+        <td class="test-name sub">- 1MHz damped oscillatory wave</td>
+        <td><span class="std-code">IEC/EN 61000-4-18 &amp; IEC 60255-22-1</span></td>
+        <td><span class="val-text">±2.5kVp CM, ±2.5kVp DM</span></td>
+      </tr>
+      <tr>
+        <td class="test-name sub">- Static discharge (ESD)</td>
+        <td><span class="std-code">IEC/EN 61000-4-2 Level 4 &amp; IEC 60255-22-2</span></td>
+        <td><span class="val-text">±8 kV contact, ±15 kV air</span></td>
+      </tr>
+      <tr>
+        <td class="test-name sub">- Emitted HF field</td>
+        <td><span class="std-code">IEC/EN 61000-4-3 Level 3 &amp; IEC 60255-22-3</span></td>
+        <td><span class="val-text">80 - 2700 MHz, 10 V/m</span></td>
+      </tr>
+      <tr>
+        <td class="test-name sub">- Fast transients (EFT)</td>
+        <td><span class="std-code">IEC/EN 61000-4-4 Level 4 &amp; IEC 60255-22-4</span></td>
+        <td><span class="val-text">±4 kV, 5/50 ns, 5 kHz</span></td>
+      </tr>
+      <tr>
+        <td class="test-name sub">- Surge</td>
+        <td><span class="std-code">IEC/EN 61000-4-5 Level 3 &amp; IEC 60255-22-5</span></td>
+        <td>
+          <ul class="val-list">
+            <li>±2 kV, 1.2/50 µs, CM</li>
+            <li>±1 kV, 1.2/50 µs, DM</li>
+          </ul>
+        </td>
+      </tr>
+      <tr>
+        <td class="test-name sub">- Conducted HF field</td>
+        <td><span class="std-code">IEC/EN 61000-4-6 Level 3 &amp; IEC 60255-22-6</span></td>
+        <td><span class="val-text">0.15 - 80 MHz, 10 Vemf</span></td>
+      </tr>
+      <tr>
+        <td class="test-name sub">- Power-frequency magnetic field</td>
+        <td><span class="std-code">IEC/EN 61000-4-8</span></td>
+        <td><span class="val-text">300A/m (continuous), 1000A/m 1-3s</span></td>
+      </tr>
+      <tr>
+        <td class="test-name sub">- Pulse magnetic field</td>
+        <td><span class="std-code">IEC/EN 61000-4-9 Level 5</span></td>
+        <td><span class="val-text">1000A/m, 1.2/50 µs</span></td>
+      </tr>
+      <tr>
+        <td class="test-name sub">- Voltage dips</td>
+        <td><span class="std-code">IEC/EN 61000-4-11 / IEC/EN 61000-4-11</span></td>
+        <td><span class="val-text">30%/1s, 60%/0.2s, 100%/0.05s</span></td>
+      </tr>
+      <tr>
+        <td class="test-name sub">- Voltage alternative component</td>
+        <td><span class="std-code">IEC/EN 61000-4-17</span></td>
+        <td><span class="val-text">15% of operating voltage (DC) / 10min</span></td>
+      </tr>
+      <tr>
+        <td class="test-name sub">- Voltage short interruptions</td>
+        <td><span class="std-code">IEC/EN 61000-4-29 &amp; IEC/EN 61000-4-11</span></td>
+        <td><span class="val-text">30%/10ms, 100%/10ms, 60%/100ms, 100%/5000ms</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- TABLE 4: Electrical Safety -->
+<div class="table-block">
+  <div class="table-label">Table 4 — Electrical Safety &amp; Insulation Tests</div>
+  <table>
+    <thead>
+      <tr>
+        <th class="col-test">Test</th>
+        <th class="col-std">Standard &amp; Test class / level</th>
+        <th class="col-val">Test value</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="test-name sub">- Impulse voltage withstand</td>
+        <td><span class="std-code">IEC/EN 60255-27 &amp; EN 60255-5, Class III</span></td>
+        <td><span class="val-text">5 kV, 1.2/50 µs</span></td>
+      </tr>
+      <tr>
+        <td class="test-name sub">- Dielectric test</td>
+        <td><span class="std-code">IEC/EN 60255-27 &amp; EN 60255-5, Class III</span></td>
+        <td><span class="val-text">2 kV, 50 Hz</span></td>
+      </tr>
+      <tr>
+        <td class="test-name sub">- Insulation resistance</td>
+        <td><span class="std-code">IEC/EN 60255-27 &amp; EN 60255-5</span></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td class="test-name sub">- Protective bonding resistance</td>
+        <td><span class="std-code">IEC/EN 60255-27</span></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td class="test-name sub">- Power supply burden</td>
+        <td><span class="std-code">IEC 60255-1</span></td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+</body>
+</html>
